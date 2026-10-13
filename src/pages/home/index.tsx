@@ -1,395 +1,254 @@
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
-	Rocket,
-	FolderTree,
-	Zap,
-	Palette,
-	Package,
-	ArrowRight,
+	ArrowUpRight,
+	ChevronLeft,
+	ChevronRight,
+	Download,
 } from 'lucide-react';
+import { useRef, useState } from 'react';
 
-import type { ChartConfig } from '@/components/ui/chart';
+gsap.registerPlugin(ScrollTrigger);
 
-import {
-	BarChartComponent,
-	ScatterChartComponent,
-	PieChartComponent,
-	AreaChartComponent,
-	RadarChartComponent,
-	FunnelChartComponent,
-	LineChartComponent,
-} from '@/components/charts';
-import { Badge } from '@/components/ui/badge';
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-	CardDescription,
-} from '@/components/ui/card';
+const shots = [
+	{ src: '/app-home.webp', alt: 'Otoha 首页' },
+	{ src: '/app-lyrics.webp', alt: 'Otoha 歌词页' },
+	{ src: '/app-explore.webp', alt: 'Otoha 探索' },
+	{ src: '/app-library.webp', alt: 'Otoha 媒体库' },
+	{ src: '/app-history.webp', alt: 'Otoha 历史记录' },
+	{ src: '/app-downloads.webp', alt: 'Otoha 下载' },
+	{ src: '/app-playlists.webp', alt: 'Otoha 播放列表' },
+];
+
+// Slightly oversized so the container's rounded corners clip the image's thin edge
+const REST_SCALE = 1.04;
+
+function settle(items: HTMLImageElement[], active: number) {
+	items.forEach((item, i) => {
+		gsap.set(item, {
+			opacity: i === active ? 1 : 0,
+			filter: 'blur(0px)',
+			scale: REST_SCALE,
+		});
+	});
+}
 
 export function Home() {
-	const data = [
-		{ date: '2024-01', 访问量: 400, 转化量: 240 },
-		{ date: '2024-02', 访问量: 300, 转化量: 139 },
-		{ date: '2024-03', 访问量: 500, 转化量: 380 },
-		{ date: '2024-04', 访问量: 478, 转化量: 430 },
-		{ date: '2024-05', 访问量: 589, 转化量: 520 },
-		{ date: '2024-06', 访问量: 439, 转化量: 290 },
-		{ date: '2024-07', 访问量: 449, 转化量: 300 },
-	];
+	const scope = useRef<HTMLDivElement>(null);
+	const slides = useRef<HTMLDivElement>(null);
+	const active = useRef(0);
+	const transition = useRef<gsap.core.Timeline | null>(null);
+	const [index, setIndex] = useState(0);
 
-	const chartConfig = {
-		访问量: {
-			label: '访问量',
-			color: 'var(--chart-3)',
-		},
-		转化量: {
-			label: '转化量',
-			color: 'var(--chart-2)',
-		},
-	} satisfies ChartConfig;
+	useGSAP(
+		() => {
+			const mm = gsap.matchMedia();
 
-	const scatterConfig = {
-		x: {
-			label: 'X 值',
-		},
-		y: {
-			label: 'Y 值',
-		},
-		z: {
-			label: 'Z 值',
-		},
-	} satisfies ChartConfig;
+			mm.add('(prefers-reduced-motion: no-preference)', () => {
+				gsap.from('[data-hero]', {
+					y: 24,
+					opacity: 0,
+					duration: 0.8,
+					stagger: 0.12,
+					ease: 'power3.out',
+				});
 
-	const pieConfig = {
-		访问量: {
-			label: '访问量',
-			color: 'var(--chart-1)',
-		},
-		转化量: {
-			label: '转化量',
-			color: 'var(--chart-2)',
-		},
-		其他: {
-			label: '其他',
-			color: 'var(--chart-3)',
-		},
-	} satisfies ChartConfig;
+				gsap.from('[data-stage]', {
+					y: 60,
+					opacity: 0,
+					duration: 1,
+					ease: 'power3.out',
+					scrollTrigger: {
+						trigger: '[data-stage]',
+						start: 'top 85%',
+						once: true,
+					},
+				});
+			});
 
-	const radarConfig = {
-		A: {
-			label: 'A 值',
-			color: 'var(--chart-1)',
+			const items = Array.from(
+				scope.current?.querySelectorAll<HTMLImageElement>('[data-slide]') ?? []
+			);
+
+			settle(items, 0);
 		},
-		B: {
-			label: 'B 值',
-			color: 'var(--chart-2)',
-		},
-	} satisfies ChartConfig;
+		{ scope }
+	);
 
-	const funnelConfig = {
-		value: {
-			label: '值',
-		},
-	} satisfies ChartConfig;
+	function go(next: number) {
+		const target = (next + shots.length) % shots.length;
+		const current = active.current;
+		const items = Array.from(
+			slides.current?.querySelectorAll<HTMLImageElement>('[data-slide]') ?? []
+		);
 
-	const scatterData = [
-		{ x: 100, y: 200, z: 200, color: 'var(--chart-1)' },
-		{ x: 120, y: 100, z: 260, color: 'var(--chart-2)' },
-		{ x: 170, y: 300, z: 400, color: 'var(--chart-3)' },
-		{ x: 140, y: 250, z: 280, color: 'var(--chart-4)' },
-		{ x: 150, y: 400, z: 500, color: 'var(--chart-5)' },
-		{ x: 110, y: 280, z: 200, color: 'var(--chart-1)' },
-	];
+		if (!items.length || target === current) {
+			return;
+		}
 
-	const pieData = [
-		{ name: '访问量', value: 400 },
-		{ name: '转化量', value: 240 },
-		{ name: '其他', value: 100 },
-	];
+		// Interrupted transitions can leave slides mid-tween, so stop them and reset every slide first
+		transition.current?.kill();
+		settle(items, current);
 
-	const radarData = [
-		{ subject: 'Math', A: 120, B: 110 },
-		{ subject: 'Chinese', A: 98, B: 130 },
-		{ subject: 'English', A: 86, B: 130 },
-		{ subject: 'Geography', A: 99, B: 100 },
-		{ subject: 'Physics', A: 85, B: 90 },
-		{ subject: 'History', A: 65, B: 85 },
-	];
+		active.current = target;
+		setIndex(target);
 
-	const funnelData = [
-		{ name: '访问', value: 1000 },
-		{ name: '注册', value: 800 },
-		{ name: '购买', value: 500 },
-		{ name: '复购', value: 200 },
-	];
+		const tl = gsap.timeline({
+			onComplete: () => settle(items, target),
+		});
+
+		tl.to(
+			items[current],
+			{
+				opacity: 0,
+				filter: 'blur(6px)',
+				scale: REST_SCALE * 1.02,
+				duration: 0.25,
+				ease: 'power2.in',
+			},
+			0
+		).fromTo(
+			items[target],
+			{ opacity: 0, filter: 'blur(6px)', scale: REST_SCALE * 0.98 },
+			{
+				opacity: 1,
+				filter: 'blur(0px)',
+				scale: REST_SCALE,
+				duration: 0.35,
+				ease: 'power2.out',
+			},
+			0
+		);
+
+		transition.current = tl;
+	}
 
 	return (
-		<div
-			className="min-h-screen bg-white p-6 text-slate-900 md:p-12
-				dark:bg-slate-950 dark:text-slate-100"
-		>
-			<div className="mx-auto max-w-4xl space-y-10">
-				<header className="space-y-4">
-					<div className="flex items-center gap-2">
-						<Badge
-							className="rounded-full border-slate-200 px-4 py-1 font-medium
-								dark:border-slate-800"
-							variant="outline"
+		<div className="py-20" ref={scope}>
+			{/* Hero: left-aligned column, like the reference */}
+			<section className="mx-auto max-w-5xl px-6">
+				<img
+					alt=""
+					className="size-28 rounded-[1.75rem]"
+					data-hero
+					src="/otoha-icon.png"
+				/>
+				<h1 className="mt-8 text-5xl font-semibold tracking-tight" data-hero>
+					Otoha
+				</h1>
+				<p className="mt-4 text-xl text-[#A3A59C]" data-hero>
+					原生 YouTube Music 桌面播放器。
+				</p>
+				<p className="mt-4 max-w-xl leading-relaxed text-[#5f6259]" data-hero>
+					基于 Flutter 构建，支持同步歌词、离线媒体包与本地播放列表。
+				</p>
+
+				<div className="mt-10 flex flex-wrap gap-3" data-hero>
+					<a
+						className="flex items-center gap-2 rounded-full bg-[#B6F26D] py-2.5
+							pr-3 pl-6 font-semibold text-[#1A210F] transition-transform
+							hover:scale-[1.02]"
+						href="https://github.com/1Yie/otoha/releases"
+						rel="noreferrer"
+						target="_blank"
+					>
+						下载最新版
+						<span
+							className="flex size-7 items-center justify-center rounded-full
+								bg-[#1A210F]/10"
 						>
-							v1.0.0 Stable
-						</Badge>
+							<Download className="size-4" />
+						</span>
+					</a>
+					<a
+						className="flex items-center gap-2 rounded-full bg-white/10 px-6
+							py-2.5 font-semibold text-[#F1F2EC] transition-colors
+							hover:bg-white/15"
+						href="https://github.com/1Yie/otoha#run-from-source"
+						rel="noreferrer"
+						target="_blank"
+					>
+						从源码运行
+						<ArrowUpRight className="size-4" />
+					</a>
+				</div>
+			</section>
+
+			{/* Stage: gradient panel with framed screenshots and carousel */}
+			<section className="mx-auto mt-20 max-w-5xl px-6" data-stage>
+				<div
+					className="relative overflow-hidden rounded-3xl bg-gradient-to-br
+						from-[#2a3320] via-[#171816] to-[#111210] px-20 py-10 md:px-24
+						md:py-14"
+				>
+					<div
+						className="relative aspect-[1780/1100] overflow-hidden rounded-lg"
+					>
+						<div className="grid size-full" ref={slides}>
+							{shots.map((shot) => (
+								<img
+									alt={shot.alt}
+									className="size-full object-cover [grid-area:1/1]"
+									data-slide
+									key={shot.src}
+									src={shot.src}
+								/>
+							))}
+						</div>
 					</div>
-					<h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-						Ichiyo <span className="text-slate-400">Template</span>
-					</h1>
-					<p
-						className="max-w-2xl text-lg leading-relaxed text-slate-500
-							dark:text-slate-400"
-					>
-						基于 React Compiler 与 Tailwind v4 构建的高性能现代化开发环境。
-					</p>
-				</header>
 
-				<div className="grid gap-6">
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
+					<button
+						aria-label="上一张"
+						className="absolute top-1/2 left-4 flex size-11 -translate-y-1/2
+							items-center justify-center rounded-full bg-[#111210]/70
+							text-[#F1F2EC] transition-colors hover:bg-[#111210]"
+						onClick={() => go(index - 1)}
+						type="button"
 					>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Rocket className="size-5 text-slate-600 dark:text-slate-400" />
-								快速开始
-							</CardTitle>
-							<CardDescription>通过以下步骤配置并运行您的项目</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className="grid gap-4">
-								{[
-									{
-										label: '目录结构',
-										desc: '核心业务逻辑位于 src/ 目录，支持 @/ 路径别名',
-										icon: <FolderTree className="size-5" />,
-									},
-									{
-										label: '启动项目',
-										desc: '执行 bun run dev 开启 Vite 热更新开发服务器',
-										icon: <Zap className="size-5" />,
-									},
-									{
-										label: '样式定制',
-										desc: 'Tailwind v4 采用原生 CSS 变量配置，更加直观快捷',
-										icon: <Palette className="size-5" />,
-									},
-									{
-										label: '构建部署',
-										desc: '运行 bun run build 生成高度优化的静态资源包',
-										icon: <Package className="size-5" />,
-									},
-								].map((item, i) => (
-									<div
-										className="group flex cursor-default items-center
-											justify-between rounded-xl border border-transparent p-4
-											transition-all hover:border-slate-200 hover:bg-white
-											dark:hover:border-slate-800 dark:hover:bg-slate-900"
-										key={i}
-									>
-										<div className="flex items-center gap-4">
-											<div
-												className="rounded-lg bg-slate-200/50 p-2 text-slate-600
-													transition-colors group-hover:bg-slate-900
-													group-hover:text-white dark:bg-slate-800
-													dark:text-slate-400 dark:group-hover:bg-slate-100
-													dark:group-hover:text-slate-900"
-											>
-												{item.icon}
-											</div>
-											<div>
-												<p className="font-semibold">{item.label}</p>
-												<p
-													className="text-sm text-slate-500 dark:text-slate-400"
-												>
-													{item.desc}
-												</p>
-											</div>
-										</div>
-										<ArrowRight
-											className="size-4 -translate-x-2 text-slate-300 opacity-0
-												transition-all group-hover:translate-x-0
-												group-hover:text-slate-900 group-hover:opacity-100
-												dark:group-hover:text-white"
-										/>
-									</div>
-								))}
-							</div>
-						</CardContent>
-					</Card>
+						<ChevronLeft className="size-5" />
+					</button>
+					<button
+						aria-label="下一张"
+						className="absolute top-1/2 right-4 flex size-11 -translate-y-1/2
+							items-center justify-center rounded-full bg-[#111210]/70
+							text-[#F1F2EC] transition-colors hover:bg-[#111210]"
+						onClick={() => go(index + 1)}
+						type="button"
+					>
+						<ChevronRight className="size-5" />
+					</button>
+
+					<div className="mt-8 flex justify-center gap-2">
+						{shots.map((shot, i) => (
+							<button
+								aria-label={`切换到 ${shot.alt}`}
+								className={`h-2 rounded-full transition-all ${
+									i === index ? 'w-6 bg-[#B6F26D]' : 'w-2 bg-white/25'
+								}`}
+								key={shot.src}
+								onClick={() => go(i)}
+								type="button"
+							/>
+						))}
+					</div>
 				</div>
 
-				<header className="space-y-4">
-					<h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-						Template <span className="text-slate-400">Charts</span>
-					</h1>
-					<p
-						className="max-w-2xl text-base leading-relaxed text-slate-500
-							dark:text-slate-400"
-					>
-						基于 coss ui + recharts
-						构建的多样化图表组件，满足各种数据可视化需求。
-					</p>
-				</header>
+				<p className="mt-8 text-center text-xs text-[#5f6259]">
+					Otoha 是非官方客户端，与 YouTube 或 Google 无关。
+				</p>
 
-				<div className="grid gap-6">
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>数据统计</CardTitle>
-							<CardDescription>访问量与转化量对比</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<BarChartComponent
-								barKeys={['访问量', '转化量']}
-								config={chartConfig}
-								data={data}
-								height={400}
-								xAxisKey="date"
-								xAxisLabel="月份"
-								yAxisLabel="数量"
-							/>
-						</CardContent>
-					</Card>
-
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>散点图示例</CardTitle>
-							<CardDescription>数据点分布</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<ScatterChartComponent
-								config={scatterConfig}
-								data={scatterData}
-								height={400}
-								xAxisKey="x"
-								xAxisLabel="X 值"
-								yAxisKey="y"
-								yAxisLabel="Y 值"
-								zAxisKey="z"
-							/>
-						</CardContent>
-					</Card>
-
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>饼图示例</CardTitle>
-							<CardDescription>数据占比</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<PieChartComponent
-								config={pieConfig}
-								data={pieData}
-								dataKey="value"
-								height={400}
-								nameKey="name"
-							/>
-						</CardContent>
-					</Card>
-
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>面积图示例</CardTitle>
-							<CardDescription>趋势展示</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<AreaChartComponent
-								areaKeys={['访问量', '转化量']}
-								config={chartConfig}
-								data={data}
-								height={400}
-								xAxisKey="date"
-								xAxisLabel="月份"
-								yAxisLabel="数量"
-							/>
-						</CardContent>
-					</Card>
-
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>雷达图示例</CardTitle>
-							<CardDescription>多维度对比</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<RadarChartComponent
-								config={radarConfig}
-								data={radarData}
-								dataKeys={['A', 'B']}
-								height={400}
-								nameKey="subject"
-							/>
-						</CardContent>
-					</Card>
-
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>漏斗图示例</CardTitle>
-							<CardDescription>转化漏斗</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<FunnelChartComponent
-								colors={[
-									'var(--chart-1)',
-									'var(--chart-2)',
-									'var(--chart-3)',
-									'var(--chart-4)',
-								]}
-								config={funnelConfig}
-								data={funnelData}
-								dataKey="value"
-								height={400}
-								nameKey="name"
-							/>
-						</CardContent>
-					</Card>
-
-					<Card
-						className="border-slate-200 bg-slate-50/50 shadow-none
-							dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<CardHeader>
-							<CardTitle>线图示例</CardTitle>
-							<CardDescription>趋势线展示</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<LineChartComponent
-								config={chartConfig}
-								data={data}
-								height={400}
-								lineKeys={['访问量', '转化量']}
-								lineType="linear"
-								xAxisKey="date"
-								xAxisLabel="月份"
-								yAxisLabel="数量"
-							/>
-						</CardContent>
-					</Card>
-				</div>
-			</div>
+				<a
+					className="mt-6 flex items-center justify-center gap-2 text-xs
+						text-[#5f6259] transition-colors hover:text-[#A3A59C]"
+					href="https://ingstar.im"
+					rel="noreferrer"
+					target="_blank"
+				>
+					Powered by ingStar
+					<img alt="" className="size-4" src="/ingstar-icon.png" />
+				</a>
+			</section>
 		</div>
 	);
 }

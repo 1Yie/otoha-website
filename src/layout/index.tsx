@@ -1,14 +1,9 @@
 import { Outlet } from 'react-router-dom';
 
-import { Footer } from '@/components/footer';
-import { Header } from '@/components/header';
-
 export function Layout() {
 	return (
-		<>
-			<Header />
+		<div className="min-h-screen bg-[#111210] text-[#F1F2EC] antialiased">
 			<Outlet />
-			<Footer />
-		</>
+		</div>
 	);
 }
