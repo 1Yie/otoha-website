@@ -160,3 +160,34 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+html {
+	background-color: #111210;
+	color-scheme: dark;
+	scrollbar-width: thin;
+	scrollbar-color: #5f6259 transparent;
+}
+
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #5f6259;
+	border: 3px solid transparent;
+	background-clip: padding-box;
+	border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: #b6f26d;
+}
+
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
